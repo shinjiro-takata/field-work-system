@@ -90,6 +90,21 @@ body {
     color: #ecf0f1;
 }
 
+.navbar__home-btn {
+    color: white;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 7px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.navbar__home-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 .navbar__logout-form {
     margin: 0;
 }
