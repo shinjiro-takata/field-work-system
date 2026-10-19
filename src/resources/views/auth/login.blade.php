@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', '現場業務システム')
+@section('brand', '現場業務システム')
+
 @section('content')
 <form method="POST" action="/login">
     @csrf

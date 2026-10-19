@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>配合手順確認表</title>
+    <title>@yield('title', '配合手順確認表')</title>
     <link rel="stylesheet" href="{{ asset('css/sanitize.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @yield('css')
@@ -14,16 +14,23 @@
     <nav class="navbar">
         <div class="navbar__container">
             <div class="navbar__brand">
-                <a href="{{ route('index') }}" class="navbar__logo">配合手順確認表</a>
+                @hasSection('brand')
+                <a href="{{ route('portal') }}" class="navbar__logo">@yield('brand')</a>
+                @else
+                <a href="{{ route('index') }}" class="navbar__logo">配合手順確認書</a>
+                @endif
             </div>
             <div class="navbar__user">
                 @if(Auth::check())
+                @unless(View::hasSection('brand'))
+                <a href="{{ route('portal') }}" class="navbar__home-btn">ホーム</a>
+                @endunless
                 <span class="navbar__user-name">{{ Auth::user()->name }}</span>
                 <form action="{{ route('logout') }}" method="POST" class="navbar__logout-form">
                     @csrf
                     <button type="submit" class="navbar__logout-btn">ログアウト</button>
                 </form>
-                @else
+                @elseif(!View::hasSection('brand'))
                 <a href="{{ route('login') }}" class="btn" style="margin: 0;">ログイン</a>
                 @endif
             </div>
@@ -52,9 +59,11 @@
         </div>
     </main>
 
+    @unless(View::hasSection('brand'))
     <footer class="footer">
         <p>&copy; 2026 配合手順確認表</p>
     </footer>
+    @endunless
 </body>
 
 </html>
