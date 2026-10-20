@@ -21,5 +21,19 @@
         <div class="menu-item__title">配合手順確認書</div>
         <div class="menu-item__description">計量ログの確認・入力、レシピ管理を行います</div>
     </a>
+
+    <a href="{{ route('resin-usage.index') }}" class="menu-item">
+        <div class="menu-item__icon">🧪</div>
+        <div class="menu-item__title">レジン使用量確認表</div>
+        <div class="menu-item__description">レジン使用量の履歴確認・新規入力を行います</div>
+    </a>
+
+    @if(Auth::user()->is_admin)
+    <a href="{{ route('users.index') }}" class="menu-item admin-only">
+        <div class="menu-item__icon">👥</div>
+        <div class="menu-item__title">アカウント管理</div>
+        <div class="menu-item__description">ユーザーアカウントを管理します</div>
+    </a>
+    @endif
 </div>
 @endsection

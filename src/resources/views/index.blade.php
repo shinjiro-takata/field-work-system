@@ -45,11 +45,6 @@
         <div class="menu-item__description">材料の名前を変更・削除できます</div>
     </a>
 
-    <a href="{{ route('users.index') }}" class="menu-item admin-only">
-        <div class="menu-item__icon">👥</div>
-        <div class="menu-item__title">アカウント管理</div>
-        <div class="menu-item__description">ユーザーアカウントを管理します</div>
-    </a>
     @endif
 </div>
 

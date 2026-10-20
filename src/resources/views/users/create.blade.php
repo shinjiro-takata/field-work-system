@@ -49,7 +49,7 @@
 </div>
 
 <div class="action-buttons">
-    <a href="{{ route('index') }}" class="btn btn-secondary">← トップに戻る</a>
+    <a href="{{ route('portal') }}" class="btn btn-secondary">← ホームに戻る</a>
 </div>
 
 @endsection

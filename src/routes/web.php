@@ -11,6 +11,8 @@ use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\ScheduledInspectionController;
+use App\Http\Controllers\ResinUsageController;
+use App\Http\Controllers\ResinUsageSettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +38,9 @@ Route::middleware(['auth', 'can:admin-only'])->group(function () {
     // 材料管理
     Route::resource('materials', MaterialController::class)->except(['show']);
 
+    Route::get('/resin-usage/settings', [ResinUsageSettingController::class, 'edit'])->name('resin-usage.settings.edit');
+    Route::put('/resin-usage/settings', [ResinUsageSettingController::class, 'update'])->name('resin-usage.settings.update');
+
     // 管理者のみレシピを管理（作成・編集・削除）
     Route::get('/recipes/create', [RecipeController::class, 'create'])->name('recipes.create');
     Route::post('/recipes', [RecipeController::class, 'store'])->name('recipes.store');
@@ -48,6 +53,13 @@ Route::middleware(['auth', 'can:admin-only'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     // 各アプリを選ぶホーム画面。
     Route::view('/', 'portal')->name('portal');
+    Route::view('/resin-usage', 'resin-usage.index')->name('resin-usage.index');
+    Route::get('/resin-usage/history', [ResinUsageController::class, 'index'])->name('resin-usage.history');
+    Route::get('/resin-usage/create', [ResinUsageController::class, 'create'])->name('resin-usage.create');
+    Route::post('/resin-usage', [ResinUsageController::class, 'store'])->name('resin-usage.store');
+    Route::get('/resin-usage/{record}/edit', [ResinUsageController::class, 'edit'])->name('resin-usage.edit');
+    Route::put('/resin-usage/{record}', [ResinUsageController::class, 'update'])->name('resin-usage.update');
+    Route::delete('/resin-usage/{record}', [ResinUsageController::class, 'destroy'])->name('resin-usage.destroy');
     Route::get('/index', [DashboardController::class, 'index'])->name('index');
     Route::get('/logs/export', [WeighingLogController::class, 'export'])->name('logs.export');
     Route::resource('logs', WeighingLogController::class);

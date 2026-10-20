@@ -15,16 +15,16 @@
         <div class="navbar__container">
             <div class="navbar__brand">
                 @hasSection('brand')
-                <a href="{{ route('portal') }}" class="navbar__logo">@yield('brand')</a>
+                <a href="@yield('brand-link', route('portal'))" class="navbar__logo">@yield('brand')</a>
                 @else
                 <a href="{{ route('index') }}" class="navbar__logo">配合手順確認書</a>
                 @endif
             </div>
             <div class="navbar__user">
                 @if(Auth::check())
-                @unless(View::hasSection('brand'))
+                @if(!View::hasSection('brand') || View::hasSection('show-home'))
                 <a href="{{ route('portal') }}" class="navbar__home-btn">ホーム</a>
-                @endunless
+                @endif
                 <span class="navbar__user-name">{{ Auth::user()->name }}</span>
                 <form action="{{ route('logout') }}" method="POST" class="navbar__logout-form">
                     @csrf

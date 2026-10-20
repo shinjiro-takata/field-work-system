@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Material;
+use App\Models\ResinUsageItem;
 use App\Http\Requests\StoreMaterialRequest;
 use App\Http\Requests\UpdateMaterialRequest;
 
@@ -39,12 +40,24 @@ class MaterialController extends Controller
 
     public function update(UpdateMaterialRequest $request, Material $material)
     {
-        $material->update($request->validated());
+        $validated = $request->validated();
+        if ($validated['unit'] !== $material->unit
+            && ResinUsageItem::where('material_id', $material->id)->exists()) {
+            return redirect()->route('materials.edit', $material)
+                ->withErrors(['unit' => 'レジン使用量の履歴がある材料の単位は変更できません。']);
+        }
+
+        $material->update($validated);
         return redirect()->route('materials.index')->with('success', '材料を更新しました');
     }
 
     public function destroy(Material $material)
     {
+        if (ResinUsageItem::where('material_id', $material->id)->exists()) {
+            return redirect()->route('materials.index')
+                ->with('status', 'レジン使用量の履歴がある材料は削除できません。');
+        }
+
         $material->delete();
         return redirect()->route('materials.index')->with('success', '材料を削除しました');
     }
