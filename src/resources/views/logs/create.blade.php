@@ -12,7 +12,7 @@
     <form action="{{ route('logs.create') }}" method="GET" class="recipe-selection-form">
         <div class="form-group">
             <label for="recipe_id">レシピを選択</label>
-            <select id="recipe_id" name="recipe_id" required class="form-select">
+            <select id="recipe_id" name="recipe_id" required class="form-select" onchange="if (this.value) this.form.submit()">
                 <option value="">-- レシピを選択してください --</option>
                 @foreach($recipes as $r)
                 <option value="{{ $r->id }}" {{ (isset($selectedRecipeId) && $selectedRecipeId == $r->id) ? 'selected' : '' }}>{{ $r->name }}</option>
@@ -22,7 +22,6 @@
             <div class="error">{{ $message }}</div>
             @enderror
         </div>
-        <button type="submit" class="btn">レシピを選択</button>
     </form>
 
     <!-- Form2: 材料入力（recipe がある場合だけ表示） -->
@@ -72,6 +71,11 @@
                     @endforeach
                 </div>
             </div>
+
+            @include('logs._extra-materials', [
+                'selectableMaterials' => $selectableMaterials,
+                'extraRows' => old('extra_materials', []),
+            ])
 
             <div class="form-group">
                 <label for="remarks">備考</label>

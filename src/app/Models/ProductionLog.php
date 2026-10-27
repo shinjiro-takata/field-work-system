@@ -26,6 +26,11 @@ class ProductionLog extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function editLogs()
+    {
+        return $this->hasMany(ProductionLogEditLog::class);
+    }
+
     public function materials()
     {
         return $this->belongsToMany(Material::class, 'production_log_materials')->withPivot('actual_quantity');

@@ -54,6 +54,7 @@
                 @foreach($allMaterials as $material)
                 <th>{{ $material->name }}</th>
                 @endforeach
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -66,21 +67,37 @@
                     </strong>
                 </td>
                 @endforeach
+                <td></td>
             </tr>
             @forelse($logs as $log)
             <tr>
                 <td data-label="日時">{{ $log->weighed_at }}</td>
                 <td data-label="レシピ">{{ $log->recipe->name }}</td>
-                <td data-label="備考">{{ $log->notes ?: '-' }}</td>
+                <td data-label="備考">
+                    @if(filled($log->notes))
+                    <button type="button" class="btn btn-secondary note-open" data-note="{{ $log->notes }}">有</button>
+                    @else
+                    -
+                    @endif
+                </td>
                 @foreach($allMaterials as $material)
                 <td data-label="{{ $material->name }}" class="{{ ($log->material_tolerances[$material->id] ?? false) ? 'out-of-tolerance-log' : '' }}">
                     {{ $log->materials->where('id', $material->id)->first()?->pivot->actual_quantity ?? '-' }}
+                    @if($log->off_recipe_materials[$material->id] ?? false)
+                    <br><small>レシピ外</small>
+                    @endif
                 </td>
                 @endforeach
+                <td data-label="操作">
+                    <a href="{{ route('logs.edit', $log) }}" class="btn btn-secondary">修正</a>
+                    @if($log->edit_logs_count)
+                    <br><small>修正済み（{{ $log->edit_logs_count }}回）</small>
+                    @endif
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="{{ 3 + count($allMaterials) }}" class="text-center">ログデータがありません</td>
+                <td colspan="{{ 4 + count($allMaterials) }}" class="text-center">ログデータがありません</td>
             </tr>
             @endforelse
         </tbody>
@@ -90,5 +107,35 @@
 <div class="action-buttons">
     <a href="{{ route('index') }}" class="btn btn-secondary">← トップに戻る</a>
 </div>
+
+<dialog id="note-dialog" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; padding: 20px;">
+    <h3>備考</h3>
+    <p id="note-dialog-body" style="white-space: pre-wrap; word-break: break-word;"></p>
+    <div class="form-actions">
+        <button type="button" id="note-dialog-close" class="btn btn-secondary">閉じる</button>
+    </div>
+</dialog>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dialog = document.getElementById('note-dialog');
+        const body = document.getElementById('note-dialog-body');
+        document.querySelectorAll('.note-open').forEach(function(button) {
+            button.addEventListener('click', function() {
+                body.textContent = button.dataset.note;
+                dialog.showModal();
+            });
+        });
+        document.getElementById('note-dialog-close').addEventListener('click', function() {
+            dialog.close();
+        });
+        // 小窓の外側をクリックしても閉じる
+        dialog.addEventListener('click', function(e) {
+            if (e.target === dialog) {
+                dialog.close();
+            }
+        });
+    });
+</script>
 
 @endsection
