@@ -121,6 +121,28 @@ class AdminAccessTest extends TestCase
         $this->assertSame($oldPassword, $target->password);
     }
 
+    // 最後の1人の管理者は一般ユーザーへ降格できず、他に管理者がいれば降格できることを確認します。
+    public function test_last_admin_cannot_be_demoted(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin);
+
+        $this->put(route('users.update', $admin), [
+            'name' => $admin->name,
+            'email' => $admin->email,
+        ])->assertRedirect(route('users.edit', $admin))
+            ->assertSessionHasErrors('is_admin');
+        $this->get(route('users.edit', $admin))->assertSee('最後の管理者は一般ユーザーに変更できません。');
+        $this->assertTrue((bool) $admin->fresh()->is_admin);
+
+        $second = $this->admin();
+        $this->put(route('users.update', $second), [
+            'name' => $second->name,
+            'email' => $second->email,
+        ])->assertRedirect(route('users.index'));
+        $this->assertFalse((bool) $second->fresh()->is_admin);
+    }
+
     // 管理者は他のアカウントを削除できるが、自分自身は削除できないことを確認します。
     public function test_admin_can_delete_others_but_not_self(): void
     {

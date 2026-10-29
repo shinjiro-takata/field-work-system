@@ -51,6 +51,7 @@
                 <input type="checkbox" name="is_admin" value="1" {{ old('is_admin', $user->is_admin) ? 'checked' : '' }}>
                 <span class="checkbox-text">管理者権限</span>
             </label>
+            @error('is_admin')<div class="error">{{ $message }}</div>@enderror
         </div>
 
         {{-- 更新・キャンセルボタン --}}

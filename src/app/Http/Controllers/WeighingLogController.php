@@ -6,6 +6,7 @@ use App\Exports\ProductionLogsExport;
 use Illuminate\Http\Request;
 use App\Models\Recipe;
 use App\Models\ProductionLog;
+use App\Models\ProductionLogDeletion;
 use App\Http\Requests\StoreWeighingLogRequest;
 use App\Models\Material;
 use Carbon\Carbon;
@@ -183,6 +184,32 @@ class WeighingLogController extends Controller
     }
 
     /**
+     * 計量ログを削除する。ログ本体は消えるため、削除前の内容と削除者を削除履歴に残す。
+     * 削除はログインしている全員ができる。
+     */
+    public function destroy(ProductionLog $log)
+    {
+        DB::transaction(function () use ($log) {
+            $log->load('recipe', 'user', 'materials');
+
+            ProductionLogDeletion::create([
+                'deleted_by' => auth()->id(),
+                'deleted_by_name' => auth()->user()->name,
+                'recipe_name' => optional($log->recipe)->name ?? '（不明）',
+                'registered_by_name' => optional($log->user)->name,
+                'weighed_at' => $log->weighed_at,
+                'deleted_data' => $this->snapshot($log),
+            ]);
+
+            // 中間テーブル（材料の実測量）は自動では消えないため、先に外してからログ本体を削除する
+            $log->materials()->detach();
+            $log->delete();
+        });
+
+        return redirect()->route('logs.index')->with('status', '計量ログを削除しました。');
+    }
+
+    /**
      * 修正履歴の比較・保存用に、ログの現在の内容（日時・備考・材料と実測量）を配列にまとめる。
      */
     private function snapshot(ProductionLog $log): array
@@ -231,7 +258,13 @@ class WeighingLogController extends Controller
         $recipes = Recipe::all();
         $allMaterials = Material::all();
 
-        return view('logs.index', compact('logs', 'recipes', 'allMaterials'));
+        return view('logs.index', [
+            'logs' => $logs,
+            'recipes' => $recipes,
+            'allMaterials' => $allMaterials,
+            // 削除履歴は新しい順に最新50件を表示する
+            'deletions' => ProductionLogDeletion::orderByDesc('created_at')->orderByDesc('id')->limit(50)->get(),
+        ]);
     }
 
     /**

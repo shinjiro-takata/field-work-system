@@ -6,6 +6,7 @@ use App\Exports\ProductionLogsExport;
 use App\Models\Material;
 use App\Models\ProductionLog;
 use App\Models\ProductionLogEditLog;
+use App\Models\ProductionLogDeletion;
 use App\Models\Recipe;
 use App\Models\ResinUsageRecord;
 use App\Models\ResinUsageSetting;
@@ -269,6 +270,99 @@ class WeighingLogTest extends TestCase
         $record = ResinUsageRecord::whereDate('usage_date', '2026-10-01')->firstOrFail();
         $item = $record->items()->where('material_id', $this->material->id)->firstOrFail();
         $this->assertEquals(10.0, (float) $item->used_quantity);
+    }
+
+    // 一般の作業者でも計量ログを削除でき、削除前の内容・削除者が削除履歴に残り、一覧に表示されることを確認します。
+    public function test_any_logged_in_user_can_delete_a_log_and_the_deletion_is_recorded(): void
+    {
+        $log = $this->createLog(10.5);
+        $log->update(['notes' => '削除する備考']);
+        $deleter = User::factory()->create(['name' => '削除者', 'is_admin' => false]);
+        $this->actingAs($deleter);
+
+        $this->delete(route('logs.destroy', $log))
+            ->assertRedirect(route('logs.index'))
+            ->assertSessionHas('status', '計量ログを削除しました。');
+
+        $this->assertDatabaseMissing('production_logs', ['id' => $log->id]);
+        $this->assertDatabaseMissing('production_log_materials', ['production_log_id' => $log->id]);
+
+        $deletion = ProductionLogDeletion::firstOrFail();
+        $this->assertSame('削除者', $deletion->deleted_by_name);
+        $this->assertSame('Recipe', $deletion->recipe_name);
+        $this->assertSame('作業者', $deletion->registered_by_name);
+        $this->assertSame(['備考：削除する備考', 'Material A：10.500 kg'], $deletion->contentDescriptions());
+
+        $this->get(route('logs.index'))
+            ->assertOk()
+            ->assertSee('削除履歴')
+            ->assertSee('削除者')
+            ->assertSee('Material A：10.500 kg');
+    }
+
+    // 削除履歴が無いときは「削除履歴はありません。」と表示し、ログがあれば各行に削除ボタンが出ることを確認します。
+    public function test_index_shows_delete_button_and_empty_deletion_history(): void
+    {
+        $this->createLog(10);
+
+        $this->get(route('logs.index'))
+            ->assertOk()
+            ->assertSee('削除履歴はありません。')
+            ->assertSee('この計量ログを削除しますか？');
+    }
+
+    // 備考なし・レシピ外材料ありのログを削除しても、材料が全て履歴に残り、備考の行は出ないことを確認します。
+    public function test_deleting_a_log_without_notes_but_with_extra_material_is_recorded(): void
+    {
+        $extra = Material::create(['name' => 'Extra', 'unit' => 'g']);
+        $log = $this->createLog(10);
+        $log->materials()->attach([$extra->id => ['actual_quantity' => 3]]);
+
+        $this->delete(route('logs.destroy', $log))->assertRedirect(route('logs.index'));
+
+        $deletion = ProductionLogDeletion::firstOrFail();
+        $this->assertSame(['Material A：10.000 kg', 'Extra：3.000 g'], $deletion->contentDescriptions());
+    }
+
+    // 削除しても、他のログや登録済みのレジン使用量記録には影響しないことを確認します。
+    public function test_deleting_a_log_keeps_other_logs_and_resin_records(): void
+    {
+        $setting = new ResinUsageSetting([
+            'material_one_id' => $this->material->id,
+            'material_two_id' => Material::create(['name' => 'Material B', 'unit' => 'kg'])->id,
+            'material_one_initial_stock' => 100,
+            'material_two_initial_stock' => 100,
+        ]);
+        $setting->id = 1;
+        $setting->save();
+
+        $deleted = $this->createLog(10, '2026-10-01 09:00:00');
+        $kept = $this->createLog(5, '2026-10-01 13:00:00');
+        $this->post(route('resin-usage.store'), [
+            'usage_date' => '2026-10-01',
+            'operator_name' => '作業者',
+            'items' => [
+                $this->material->id => ['replenished_quantity' => 0, 'actual_stock' => 85],
+                $setting->material_two_id => ['replenished_quantity' => 0, 'actual_stock' => 100],
+            ],
+        ])->assertRedirect(route('resin-usage.history'));
+
+        $this->delete(route('logs.destroy', $deleted))->assertRedirect(route('logs.index'));
+
+        $this->assertDatabaseHas('production_logs', ['id' => $kept->id]);
+        $item = ResinUsageRecord::whereDate('usage_date', '2026-10-01')->firstOrFail()
+            ->items()->where('material_id', $this->material->id)->firstOrFail();
+        $this->assertEquals(15.0, (float) $item->used_quantity);
+    }
+
+    // 未ログインの利用者は計量ログを削除できないことを確認します。
+    public function test_guest_cannot_delete_a_log(): void
+    {
+        $log = $this->createLog(10);
+        auth()->logout();
+
+        $this->delete(route('logs.destroy', $log))->assertRedirect('/login');
+        $this->assertDatabaseHas('production_logs', ['id' => $log->id]);
     }
 
     // ログイン・ログアウトの基本動作を確認します。

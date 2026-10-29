@@ -53,10 +53,18 @@ class UserManagementController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $validated = $request->validated();
+        $willBeAdmin = (bool) ($validated['is_admin'] ?? false);
+
+        // 最後の1人の管理者を一般ユーザーに降格すると、管理画面に入れる人がいなくなるため禁止する
+        if ($user->is_admin && !$willBeAdmin && $this->isLastAdmin($user)) {
+            return redirect()->route('users.edit', $user)
+                ->withInput()
+                ->withErrors(['is_admin' => '最後の管理者は一般ユーザーに変更できません。']);
+        }
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
-        $user->is_admin = (bool) ($validated['is_admin'] ?? false);
+        $user->is_admin = $willBeAdmin;
         $user->role = $user->is_admin ? 'admin' : 'worker';
 
         if (!empty($validated['password'])) {
@@ -78,5 +86,11 @@ class UserManagementController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')->with('status', 'アカウントを削除しました。');
+    }
+
+    /** 指定したユーザーが、システムに残っている唯一の管理者かどうかを返す。 */
+    private function isLastAdmin(User $user): bool
+    {
+        return $user->is_admin && User::where('is_admin', true)->where('id', '!=', $user->id)->doesntExist();
     }
 }

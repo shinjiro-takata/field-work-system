@@ -102,6 +102,12 @@
                     @if($log->edit_logs_count)
                     <br><small>修正済み（{{ $log->edit_logs_count }}回）</small>
                     @endif
+                    {{-- 削除ボタン: 確認ダイアログで OK のときだけ送信する。削除内容は下の削除履歴に残る --}}
+                    <form action="{{ route('logs.destroy', $log) }}" method="POST" style="display: inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('この計量ログを削除しますか？削除内容は削除履歴に残ります。');">削除</button>
+                    </form>
                 </td>
             </tr>
             @empty
@@ -112,6 +118,45 @@
         </tbody>
     </table>
 </div>
+
+{{-- ===== 削除履歴（いつ・誰が・どの内容のログを削除したか） ===== --}}
+<section class="log-deletion-history">
+    <h2>削除履歴</h2>
+    @if($deletions->isEmpty())
+    <div class="info-box"><p>削除履歴はありません。</p></div>
+    @else
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>削除日時</th>
+                    <th>削除者</th>
+                    <th>計量日時</th>
+                    <th>レシピ</th>
+                    <th>登録者</th>
+                    <th>削除した内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($deletions as $deletion)
+                <tr>
+                    <td>{{ $deletion->created_at->format('Y-m-d H:i:s') }}</td>
+                    <td>{{ $deletion->deleted_by_name }}</td>
+                    <td>{{ $deletion->weighed_at->format('Y-m-d H:i') }}</td>
+                    <td>{{ $deletion->recipe_name }}</td>
+                    <td>{{ $deletion->registered_by_name }}</td>
+                    <td>
+                        @foreach($deletion->contentDescriptions() as $line)
+                        <div>{{ $line }}</div>
+                        @endforeach
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</section>
 
 <div class="action-buttons">
     <a href="{{ route('index') }}" class="btn btn-secondary">← トップに戻る</a>
