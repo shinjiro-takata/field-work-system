@@ -5,10 +5,13 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * アカウント編集フォームの入力チェックを行うクラス（フォームリクエスト）。
+ */
 class UpdateUserRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * この操作を実行してよいか。ログイン中の管理者のみ許可する。
      *
      * @return bool
      */
@@ -18,24 +21,30 @@ class UpdateUserRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * 入力チェックのルール。
+     *  - required: 必須 / string: 文字列 / max: 最大文字数 / email: メール形式
+     *  - unique: 重複不可 / min: 最小文字数 / confirmed: 「確認用」欄（password_confirmation）と一致
+     *  - nullable: 空でもよい / boolean: 真偽値（チェックボックス）
      *
      * @return array
      */
     public function rules()
     {
+        // 編集対象のユーザー（URLから取得）
         $user = $this->route('user');
 
         return [
             'name' => ['required', 'string', 'max:255'],
+            // メールアドレス（自分自身は重複判定から除外する）
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            // パスワードは任意。空欄なら変更しない
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'is_admin' => ['nullable', 'boolean'],
         ];
     }
 
     /**
-     * Get the error messages for the defined validation rules.
+     * ルールに違反したときに画面へ出すエラーメッセージ（「項目名.ルール名」ごとに指定）。
      *
      * @return array
      */

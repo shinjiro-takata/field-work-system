@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * ユーザー（ログインするアカウント）のテーブル users を作成する。
+ * マイグレーション = データベースの表構造を、プログラムで管理・変更する仕組み。
+ */
 class CreateUsersTable extends Migration
 {
     /**

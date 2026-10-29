@@ -3,12 +3,12 @@
 namespace App\Support;
 
 /**
- * 週次点検（週末担当者又は保全担当者停止時点検）のチェックリスト定義。
+ * 週次点検（週末担当者又は保全担当者停止時点検）のチェックリストを定義する。
  */
 class WeeklyChecklist extends Checklist
 {
     /**
-     * 点検画面に表示する順序で、グループおよび項目一覧を返す。
+     * 点検画面に表示するグループと項目を返す。各項目のidは保存用キー、location/item/methodは表示情報、type/unitは入力種別と単位。
      *
      * @return list<array{
      *     name: string,

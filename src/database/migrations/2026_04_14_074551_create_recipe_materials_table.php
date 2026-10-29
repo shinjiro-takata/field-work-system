@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * レシピと材料を結ぶ中間テーブル（ピボットテーブル）recipe_materials を作成する。
+ * 後続の 2026_04_16 のマイグレーションで削除され、作り直されている。
+ */
 class CreateRecipeMaterialsTable extends Migration
 {
     /**

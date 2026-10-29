@@ -14,12 +14,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * 週次・月次など、点検種別ごとに項目が異なる点検の画面を共通処理で提供する。
  * 点検種別はルートの type パラメーターで決まる。
- * defaults() の値はURIパラメーターの後ろに渡されるため、記録、種別の順で受け取る。
+ * ルートURLのパラメーターが先に渡され、defaults()の値が後に続くため、記録、種別の順で受け取る。
  */
 class ScheduledInspectionController extends Controller
 {
     /**
-     * 新しい点検を入力するためのチェックリストを表示する。
+     * 点検種別に対応する新しいチェックリストを表示する。
      */
     public function create(string $type): View
     {
@@ -32,7 +32,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 点検データを保存し、記録確認画面へ移動する。
+     * 入力を検証・保存し、該当種別の記録確認画面へ移動する。
      */
     public function store(
         ScheduledInspectionRecordRequest $request,
@@ -47,7 +47,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 点検記録を一覧表示する。
+     * 指定した種別の点検記録だけを一覧表示する。
      */
     public function index(string $type): View
     {
@@ -59,7 +59,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 点検記録を閲覧専用で表示する。
+     * 種別が一致する点検記録を閲覧専用で表示する。
      */
     public function show(InspectionRecord $inspection, string $type): View
     {
@@ -73,7 +73,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 点検記録の編集フォームを表示する。
+     * 種別が一致する点検記録の編集フォームを表示する。
      */
     public function edit(InspectionRecord $inspection, string $type): View
     {
@@ -88,7 +88,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 編集された点検記録を更新し、変更履歴を記録する。
+     * 編集内容を保存し、編集者と変更内容を履歴に残す。
      */
     public function update(
         ScheduledInspectionRecordRequest $request,
@@ -106,7 +106,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 保存済みの点検結果をCSV形式でダウンロードする。
+     * 保存済みの点検結果をCSV（表計算ソフトで扱える表形式）でダウンロードする。
      */
     public function export(string $type, ScheduledInspectionCsvExporter $exporter): StreamedResponse
     {
@@ -115,6 +115,7 @@ class ScheduledInspectionController extends Controller
 
     /**
      * 点検種別に対応するチェックリストのクラス名を返す。
+     * チェックリストは画面に出す項目と、その入力形式をまとめた定義。
      *
      * @return class-string<\App\Support\Checklist>
      */
@@ -124,7 +125,7 @@ class ScheduledInspectionController extends Controller
     }
 
     /**
-     * 他の点検種別の記録が、この種別の画面から開かれないようにする。
+     * 他の種別の記録が、この種別の画面から開かれないよう404にする。
      */
     private function ensureType(InspectionRecord $inspection, string $type): void
     {

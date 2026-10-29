@@ -16,6 +16,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // トップページはログインが必要なため、未ログインならログイン画面へ移動する
+        $response->assertRedirect('/login');
     }
 }

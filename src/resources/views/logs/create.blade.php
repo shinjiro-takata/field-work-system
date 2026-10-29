@@ -5,10 +5,11 @@
 @endsection
 
 @section('content')
+{{-- ===== 画面タイトル ===== --}}
 <h1>計量データの入力</h1>
 
 <div class="form-container">
-    <!-- Form1: レシピ選択 -->
+    {{-- ===== フォーム1: レシピ選択（選ぶと自動送信され、選んだレシピの入力欄が表示される） ===== --}}
     <form action="{{ route('logs.create') }}" method="GET" class="recipe-selection-form">
         <div class="form-group">
             <label for="recipe_id">レシピを選択</label>
@@ -24,7 +25,7 @@
         </div>
     </form>
 
-    <!-- Form2: 材料入力（recipe がある場合だけ表示） -->
+    {{-- ===== フォーム2: 材料入力（レシピが選ばれている場合だけ表示） ===== --}}
     @if(isset($recipe) && $recipe)
     <div class="material-form-container">
         <h2>{{ $recipe->name }}</h2>
@@ -33,6 +34,7 @@
             @csrf
             <input type="hidden" name="recipe_id" value="{{ $recipe->id }}">
 
+            {{-- 計量日時（初期値は現在日時。old() = 入力エラーで戻ったときは直前の入力値） --}}
             <div class="form-group">
                 <label for="weighing_date">計量日時</label>
                 <input type="datetime-local" id="weighing_date" name="weighed_at" value="{{ old('weighed_at', $defaultDateTime ?? '') }}" required>
@@ -41,6 +43,7 @@
                 @enderror
             </div>
 
+            {{-- レシピの各材料の実測量入力欄（基準量・許容範囲を横に表示） --}}
             <div class="materials-section">
                 <h3>材料と数量</h3>
                 <div class="materials-grid">
@@ -72,11 +75,13 @@
                 </div>
             </div>
 
+            {{-- レシピ外の材料欄（部分ビュー） --}}
             @include('logs._extra-materials', [
                 'selectableMaterials' => $selectableMaterials,
                 'extraRows' => old('extra_materials', []),
             ])
 
+            {{-- 備考（レシピ外材料を使った場合は理由を必須とする） --}}
             <div class="form-group">
                 <label for="remarks">備考</label>
                 <textarea id="remarks" name="notes" class="form-textarea">{{ old('notes') }}</textarea>
@@ -85,6 +90,7 @@
                 @enderror
             </div>
 
+            {{-- 保存・キャンセルボタン --}}
             <div class="form-actions">
                 <button type="submit" class="btn">💾 保存</button>
                 <a href="{{ route('logs.index') }}" class="btn btn-secondary">キャンセル</a>
@@ -92,6 +98,7 @@
         </form>
     </div>
     @else
+    {{-- レシピ未選択のときの案内 --}}
     <div class="info-box">
         <p>レシピを選択して、材料の計量データを入力してください。</p>
     </div>
@@ -102,55 +109,37 @@
     <a href="{{ route('index') }}" class="btn btn-secondary">← トップに戻る</a>
 </div>
 
+{{-- ===== JavaScript: 入力した実測量が許容範囲外なら入力欄に out-of-tolerance クラスを付けて強調する ===== --}}
 <script>
-    // 許容範囲チェック - DOMContentLoaded後に実行
     document.addEventListener('DOMContentLoaded', function() {
-        const setupToleranceCheck = () => {
-            document.querySelectorAll('.material-input').forEach(input => {
-                const checkTolerance = () => {
-                    const standard = parseFloat(input.dataset.standard);
-                    const tolerance = parseFloat(input.dataset.tolerance);
-                    const actual = parseFloat(input.value);
+        document.querySelectorAll('.material-input').forEach(input => {
+            // 基準量±許容量の範囲外かを判定し、クラスの付け外しをする
+            const checkTolerance = () => {
+                const standard = parseFloat(input.dataset.standard);
+                const tolerance = parseFloat(input.dataset.tolerance);
+                const actual = parseFloat(input.value);
 
-                    console.log('Checking:', {
-                        standard,
-                        tolerance,
-                        actual
-                    });
+                // 基準量・実測量が数値でなければ判定しない
+                if (isNaN(standard) || isNaN(actual)) {
+                    input.classList.remove('out-of-tolerance');
+                    return;
+                }
 
-                    if (isNaN(standard) || isNaN(actual)) {
-                        input.classList.remove('out-of-tolerance');
-                        return;
-                    }
+                // 許容範囲が設定されている（0より大きい）場合のみチェック
+                if (!isNaN(tolerance) && tolerance > 0) {
+                    const minValue = standard - tolerance;
+                    const maxValue = standard + tolerance;
+                    const isOut = actual < minValue || actual > maxValue;
+                    input.classList.toggle('out-of-tolerance', isOut);
+                } else {
+                    input.classList.remove('out-of-tolerance');
+                }
+            };
 
-                    // 許容範囲が設定されている場合のみチェック
-                    if (!isNaN(tolerance) && tolerance > 0) {
-                        const minValue = standard - tolerance;
-                        const maxValue = standard + tolerance;
-
-                        console.log('Range:', {
-                            minValue,
-                            maxValue,
-                            actual
-                        });
-
-                        if (actual < minValue || actual > maxValue) {
-                            input.classList.add('out-of-tolerance');
-                        } else {
-                            input.classList.remove('out-of-tolerance');
-                        }
-                    } else {
-                        input.classList.remove('out-of-tolerance');
-                    }
-                };
-
-                input.addEventListener('input', checkTolerance);
-                // ページロード時にもチェック
-                checkTolerance();
-            });
-        };
-
-        setupToleranceCheck();
+            // 入力のたびに判定し、画面表示時にも1回判定する
+            input.addEventListener('input', checkTolerance);
+            checkTolerance();
+        });
     });
 </script>
 

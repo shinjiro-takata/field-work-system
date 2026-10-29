@@ -13,6 +13,7 @@
 @section('content')
 <h1>{{ $record ? '記録の修正' : 'レジン使用量の新規入力' }}</h1>
 
+{{-- 日付を選び直すと、その日の計量ログと在庫情報を読み込みます。 --}}
 <form action="{{ route('resin-usage.create') }}" method="GET" class="form-container">
     <div class="form-group">
         <label for="usage-date-picker">入力する日付</label>
@@ -20,6 +21,7 @@
     </div>
 </form>
 
+{{-- 作業者・材料ごとの在庫・上司確認をまとめて保存するフォームです。 --}}
 <form action="{{ $record ? route('resin-usage.update', $record) : route('resin-usage.store') }}" method="POST" class="form-container">
     @csrf
     @if($record)
@@ -44,6 +46,7 @@
     <div class="materials-section">
         <h2>レジン使用量・在庫</h2>
         <p>使用量は配合手順確認書の計量ログから、選択した日付・材料ごとに自動集計します。</p>
+        {{-- 材料ごとに前回在庫から計算在庫を求め、目視在庫との差を入力します。 --}}
         @foreach($materials as $material)
             @php
                 $item = $record ? $record->items->firstWhere('material_id', $material->id) : null;
@@ -126,6 +129,7 @@
         @endforeach
     </div>
 
+    {{-- 上司が確認した場合は、名前と確認状態も記録します。 --}}
     <div class="form-group">
         <input type="hidden" name="supervisor_confirmed" value="0">
         <label for="supervisor_confirmed">
@@ -151,6 +155,7 @@
 </form>
 
 <script>
+    // 補充数・実在庫・入力可能な初回在庫が変わったら、在庫と差異を即時に再計算します。
     document.querySelectorAll('.resin-replenished').forEach(function (input) {
         const materialId = input.dataset.material;
         const openingElement = input.closest('.resin-usage-item').querySelector('.resin-opening');
@@ -160,6 +165,7 @@
         const differenceOutput = document.getElementById('difference-' + materialId);
 
         function updateCalculatedStock() {
+            // 計算在庫は「前回在庫 + 補充数 - 使用量」、差異は「実在庫 - 計算在庫」です。
             const opening = openingInput ? parseFloat(openingInput.value) : parseFloat(openingElement.dataset.opening);
             const replenished = parseFloat(input.value);
             const used = parseFloat(input.dataset.used);

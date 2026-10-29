@@ -6,9 +6,15 @@ use App\Models\InspectionRecord;
 use App\Support\InspectionTypes;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * 点検記録の作成・更新をまとめ、画面から受け取った保存処理を担当するサービスクラス。
+ * サービスクラスは、複数の保存手順をまとめて呼び出すためのクラス。
+ */
 class InspectionRecordService
 {
     /**
+     * 検証済みデータから新しい点検記録を作成する。
+     *
      * @param array{
      *     inspection_type?: string,
      *     inspection_date: string,
@@ -29,7 +35,7 @@ class InspectionRecordService
     }
 
     /**
-     * 点検記録と編集履歴を同時に保存し、片方だけ更新される状態を防ぐ。
+     * トランザクション（複数のDB操作をまとめ、失敗時はすべて取り消す仕組み）で記録と編集履歴を保存する。
      *
      * @param array{
      *     editor_name: string,
@@ -63,7 +69,7 @@ class InspectionRecordService
     }
 
     /**
-     * 記録項目の差分だけを残し、閲覧時に何が変わったか確認できるようにする。
+     * 更新前と更新後を比べ、変わった項目だけを編集履歴に残す。
      *
      * @param array{
      *     note: string|null,
@@ -91,7 +97,7 @@ class InspectionRecordService
     }
 
     /**
-     * 点検項目ごとの旧値と新値を、人が読める編集履歴に変換する。
+     * 点検項目ごとの変更前後を比較し、画面で読みやすい編集履歴に整える。
      *
      * @param array<string, mixed> $oldResults
      * @param array<string, mixed> $newResults
@@ -122,7 +128,7 @@ class InspectionRecordService
     }
 
     /**
-     * 点検結果を、編集履歴に表示するための文字列に整える。
+     * 1項目の点検結果を、編集履歴に表示する文字列に変換する。
      *
      * @param array<string, mixed>|null $result
      */

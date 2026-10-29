@@ -6,10 +6,13 @@ use App\Models\InspectionRecord;
 use App\Support\InspectionTypes;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * 週次・月次・定期点検の記録をCSV（表計算ソフトで扱える表形式）に書き出す。
+ */
 class ScheduledInspectionCsvExporter
 {
     /**
-     * 指定した点検種別の保存済み結果を、Excelで開けるCSVとしてダウンロードする。
+     * 指定した種別の保存済み結果を、Excelで開けるCSV（表計算ソフト用の表形式）としてダウンロードする。
      */
     public function download(string $type): StreamedResponse
     {
@@ -30,9 +33,7 @@ class ScheduledInspectionCsvExporter
             foreach ($records as $record) {
                 foreach ($items as $id => $item) {
                     $result = $record->results[$id] ?? [];
-                    $status = ($result['status'] ?? null) === 'ok'
-                        ? '良好'
-                        : (($result['status'] ?? null) === 'ng' ? '要対応' : (isset($result['value']) ? '数値記録' : '未点検'));
+                    $status = $this->statusLabel($result);
                     $action = \App\Support\PeriodicChecklist::actionLabels()[$result['action'] ?? ''] ?? '';
                     $row = [
                         $record->inspection_date->format('Y-m-d'),
@@ -63,7 +64,7 @@ class ScheduledInspectionCsvExporter
     }
 
     /**
-     * CSVの見出し行を返す。油の補充・交換項目では点検項目名と結果の列を省く。
+     * CSVの見出し行を作る。油の補充・交換だけの場合は不要な列を省く。
      *
      * @return list<string>
      */
@@ -86,7 +87,25 @@ class ScheduledInspectionCsvExporter
     }
 
     /**
-     * Excelで計算式として誤認識される先頭文字をエスケープする。
+     * 保存された値から、CSVに表示する点検状態の文言を選ぶ。
+     *
+     * @param array<string, mixed> $result
+     */
+    private function statusLabel(array $result): string
+    {
+        if (($result['status'] ?? null) === 'ok') {
+            return '良好';
+        }
+
+        if (($result['status'] ?? null) === 'ng') {
+            return '要対応';
+        }
+
+        return isset($result['value']) ? '数値記録' : '未点検';
+    }
+
+    /**
+     * 入力内容がExcelで数式として実行されないよう、危険な先頭文字を無害化する。
      */
     private function sanitizeForSpreadsheets(string $value): string
     {

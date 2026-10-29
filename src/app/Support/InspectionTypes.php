@@ -3,12 +3,13 @@
 namespace App\Support;
 
 /**
- * ホーム画面に表示する点検種別の定義。
+ * ホーム画面に表示する点検種別を定義する。各種別のkeyは内部識別子、name/descriptionは表示文、routeは遷移先、
+ * checklistは項目定義クラス、availableは利用可否を表す。subtitleとfootnoteは入力画面での補足表示。
  */
 class InspectionTypes
 {
     /**
-     * 点検種別を表示順に返す。
+     * 日常・週次・月次・定期の順で点検種別を返す。各配列キーの意味はクラス説明のとおり。
      *
      * @return array<string, array<string, mixed>>
      */
@@ -55,7 +56,7 @@ class InspectionTypes
     }
 
     /**
-     * 指定した種別の定義を返す。存在しない場合は404にする。
+     * 指定した種別の定義を返す。登録されていない種別は404（ページなし）にする。
      *
      * @return array<string, mixed>
      */
@@ -65,7 +66,7 @@ class InspectionTypes
     }
 
     /**
-     * 点検種別に対応するチェックリストの項目一覧を返す。存在しない種別は日常点検として扱う。
+     * 点検種別に対応するチェックリストの項目を返す。定義にない種別は日常点検の項目を使う。
      *
      * @return array<string, array<string, mixed>>
      */

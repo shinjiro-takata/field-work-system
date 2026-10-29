@@ -3,7 +3,7 @@
 @section('title', $type['name'])
 
 @section('content')
-    {{-- 点検項目が未登録の点検種別に対する準備中画面。 --}}
+    {{-- 点検項目が未登録の種別について、利用開始前であることを案内する。 --}}
     <div class="page-heading">
         <div>
             <p class="eyebrow">FACILITY MANAGEMENT</p>

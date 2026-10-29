@@ -7,17 +7,23 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * PeriodicInspectionWorkflowTestの画面表示・保存・編集・出力の動作を確認する。
+ */
 class PeriodicInspectionWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    // 設備点検はログイン必須のため、全テストでログイン済みにする。
+    // 点検画面を利用できるよう、各テストの開始時にテスト用ユーザーでログインする。
     protected function setUp(): void
     {
         parent::setUp();
         $this->actingAs(User::factory()->create(['name' => '佐藤']));
     }
 
+    /**
+     * 定期点検画面に油種・規定量・補充交換の説明が表示されることを確認する。
+     */
     public function test_periodic_page_shows_equipment_oil_and_capacity(): void
     {
         $this->get(route('inspections.periodic.create'))
@@ -31,6 +37,9 @@ class PeriodicInspectionWorkflowTest extends TestCase
             ->assertSee('交換');
     }
 
+    /**
+     * 油の作業種類と量を保存し、確認画面とCSVに出力できることを確認する。
+     */
     public function test_can_save_view_and_export_oil_amounts(): void
     {
         $this->post(route('inspections.periodic.store'), [
@@ -54,6 +63,9 @@ class PeriodicInspectionWorkflowTest extends TestCase
         $this->assertStringContainsString('L', $csv);
     }
 
+    /**
+     * 数値でない量、許可されない作業、必要な入力の欠落を拒否することを確認する。
+     */
     public function test_rejects_non_numeric_amount_and_empty_input(): void
     {
         $this->post(route('inspections.periodic.store'), [

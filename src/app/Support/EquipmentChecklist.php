@@ -2,10 +2,13 @@
 
 namespace App\Support;
 
+/**
+ * 日常点検のチェックリストを定義する。各グループはname（表示名）とitems（項目一覧）を持つ。
+ */
 class EquipmentChecklist
 {
     /**
-     * 点検画面に表示する順序で、通常点検または圧力計の入力項目を返す。
+     * 点検画面に表示するグループと項目を返す。各項目のidは保存用キー、location/item/methodは表示情報、typeは入力方式。
      *
      * @return list<array{
      *     name: string,
@@ -79,7 +82,7 @@ class EquipmentChecklist
     }
 
     /**
-     * 点検結果を保存する固定IDをキーにして、表示名を含む項目一覧を返す。
+     * 結果を保存する固定IDをキーにして一覧化し、グループ表示名も各項目に追加する。
      *
      * @return array<string, array{
      *     id: string,

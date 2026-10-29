@@ -3,7 +3,7 @@
 @section('title', '点検履歴')
 
 @section('content')
-    {{-- History heading and page navigation. --}}
+    {{-- ページの見出しと、点検入力・履歴の切り替えリンク。 --}}
     <div class="page-heading">
         <div>
             <p class="eyebrow">INSPECTION HISTORY</p>
@@ -15,7 +15,7 @@
             <a class="tab-link active" href="{{ route('inspections.index') }}">点検履歴</a>
         </div>
     </div>
-    {{-- Read-only inspection summaries with pagination and CSV export. --}}
+    {{-- 保存済み記録の件数と、CSV出力へのリンク。CSVは表計算ソフトで開ける形式。 --}}
     <div class="panel">
         <div class="panel-header">
             <div><h2 class="panel-title">保存済みの記録</h2><p class="panel-subtitle">全 {{ $records->total() }} 件</p></div>
@@ -27,7 +27,7 @@
         @if ($records->isEmpty())
             <div class="history-empty"><strong>点検履歴はまだありません</strong>点検結果を保存すると、ここに表示されます。</div>
         @else
-            {{-- Each entry links to a read-only detail page; editing is not available here. --}}
+            {{-- 履歴の各行から確認画面へ移動する。編集は詳細画面を経由して行う。 --}}
             <div class="history-list">
                 @foreach ($records as $record)
                     @php

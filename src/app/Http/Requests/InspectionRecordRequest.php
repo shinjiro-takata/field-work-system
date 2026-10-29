@@ -8,6 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * 日常点検フォームの入力値を検証し、保存処理に渡すデータを整える。
+ */
 class InspectionRecordRequest extends FormRequest
 {
     /**
@@ -19,7 +22,7 @@ class InspectionRecordRequest extends FormRequest
     }
 
     /**
-     * チェックリストに定義された入力だけを受け付ける。
+     * バリデーション（入力値が正しいかの確認）ルールを、チェックリストに沿って作る。
      *
      * @return array<string, array<int, string|\Illuminate\Validation\Rules\In|\Illuminate\Validation\Rules\Unique>>
      */
@@ -68,7 +71,7 @@ class InspectionRecordRequest extends FormRequest
     }
 
     /**
-     * 検証済みフォーム値を、アプリケーション層で扱う形式に整える。
+     * 検証済みフォーム値を保存用に整え、マッパー（入力形式を保存形式へ変換する処理）に渡す。
      *
      * @return array{
      *     inspection_date?: string,

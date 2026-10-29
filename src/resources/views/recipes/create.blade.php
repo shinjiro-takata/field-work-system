@@ -5,12 +5,15 @@
 @endsection
 
 @section('content')
+{{-- ===== 画面タイトル ===== --}}
 <h1>新規レシピ作成</h1>
 
 <div class="form-container">
     <form action="{{ route('recipes.store') }}" method="POST" class="recipe-form">
+        {{-- @csrf = フォーム送信の正当性を確認する合言葉（トークン）を埋め込む --}}
         @csrf
 
+        {{-- レシピ名（必須） --}}
         <div class="form-group">
             <label for="name">レシピ名 <span class="required">*</span></label>
             <input type="text" id="name" name="name" value="{{ old('name') }}" required class="form-input">
@@ -19,6 +22,7 @@
             @enderror
         </div>
 
+        {{-- 登録済みの材料から選ぶ。チェックした材料が含まれ、材料ごとに基準量（数量）と許容範囲（±）を入力する --}}
         <div class="form-section">
             <h3>既存の材料</h3>
             <p style="font-size: 13px; color: #666; margin-bottom: 15px;">✓をつけた材料がレシピに含まれます。</p>
@@ -56,6 +60,7 @@
             </div>
         </div>
 
+        {{-- 材料マスタに無い材料をその場で作ってレシピに加える欄（材料名と単位が両方入力されたときだけ有効） --}}
         <div class="form-section">
             <h3>新しい材料を追加</h3>
             <p style="font-size: 13px; color: #666; margin-bottom: 15px;">新しい材料を作成して、このレシピに追加します。</p>
@@ -124,6 +129,7 @@
             </div>
         </div>
 
+        {{-- 作成・キャンセルボタン --}}
         <div class="form-actions">
             <button type="submit" class="btn">✅ 作成</button>
             <a href="{{ route('recipes.index') }}" class="btn btn-secondary">キャンセル</a>

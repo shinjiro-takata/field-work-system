@@ -11,6 +11,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * 日常点検の入力、履歴表示、保存済み記録の確認・編集を受け持つ。
+ */
 class InspectionController extends Controller
 {
     /**

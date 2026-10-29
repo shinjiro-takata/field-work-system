@@ -26,7 +26,8 @@
         @endif
     </div>
 
-    {{-- 新規登録と明示的な編集で共通の点検フォームを使用する。 --}}
+    {{-- 新規登録と編集で共通のフォームを使い、送信先だけを切り替える。 --}}
+    {{-- 入力エラーがある場合は、サーバーから返された内容をまとめて表示する。 --}}
     <form data-inspection-form method="POST" action="{{ $editing ? route('inspections.update', $record) : route('inspections.store') }}">
         @csrf
         @if ($editing) @method('PUT') @endif
@@ -49,6 +50,7 @@
                     </p>
                 </div>
             </div>
+            {{-- 点検日・担当者を表示し、編集時は編集者も確認できるようにする。 --}}
             <div class="form-meta">
                 <div>
                     <label class="field-label" for="inspection-date">点検日</label>
@@ -70,6 +72,8 @@
                 @endif
             </div>
 
+            {{-- 点検項目をグループごとに表示し、目視項目と圧力計で入力欄を切り替える。 --}}
+            @php $itemNumber = 0; @endphp
             @foreach ($groups as $groupIndex => $group)
                 <section aria-label="{{ $group['name'] }}">
                     <div class="section-heading">
@@ -77,12 +81,10 @@
                         <span class="section-count">{{ count($group['items']) }}項目</span>
                     </div>
                     {{-- 目視点検には状態選択を、圧力計には数値入力欄を表示する。 --}}
-                    @foreach ($group['items'] as $itemIndex => $item)
+                    @foreach ($group['items'] as $item)
                         @php
                             $value = old('results.' . $item['id'], $record ? ($record->results[$item['id']] ?? []) : []);
-                            $number = 1;
-                            foreach (array_slice($groups, 0, $groupIndex) as $previousGroup) $number += count($previousGroup['items']);
-                            $number += $itemIndex;
+                            $number = ++$itemNumber;
                         @endphp
                         <div class="check-row">
                             <span class="row-number">{{ str_pad($number, 2, '0', STR_PAD_LEFT) }}</span>
@@ -114,7 +116,7 @@
                 </section>
             @endforeach
 
-            {{-- 任意のメモ欄と、フォームの保存操作を表示する。 --}}
+            {{-- 任意の全体メモと、入力内容を保存する操作を表示する。 --}}
             <div class="note-wrap">
                 <label class="field-label" for="inspection-note">全体メモ（任意）</label>
                 <textarea class="note-field" id="inspection-note" name="note" maxlength="1000" placeholder="気づいたこと、引き継ぎ事項など">{{ old('note', $record ? $record->note : '') }}</textarea>

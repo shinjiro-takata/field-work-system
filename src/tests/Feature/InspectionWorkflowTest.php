@@ -8,17 +8,23 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * InspectionWorkflowTestの画面表示・保存・編集・出力の動作を確認する。
+ */
 class InspectionWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    // 設備点検はログイン必須のため、全テストでログイン済みにする。
+    // 点検画面を利用できるよう、各テストの開始時にテスト用ユーザーでログインする。
     protected function setUp(): void
     {
         parent::setUp();
         $this->actingAs(User::factory()->create(['name' => '佐藤']));
     }
 
+    /**
+     * ホームから各点検種別へ移動でき、入力画面の見出しが正しいことを確認する。
+     */
     public function test_home_links_to_every_inspection_type(): void
     {
         $this->get(route('home'))
@@ -34,6 +40,9 @@ class InspectionWorkflowTest extends TestCase
         $this->get(route('inspections.periodic.create'))->assertOk()->assertSee('定期点検');
     }
 
+    /**
+     * 日常点検画面に指定の見出しがあり、不要な表示要素がないことを確認する。
+     */
     public function test_daily_inspection_page_uses_the_requested_title_without_summary_cards(): void
     {
         $this->get(route('inspections.create'))
@@ -46,6 +55,9 @@ class InspectionWorkflowTest extends TestCase
             ->assertDontSee('summary-grid');
     }
 
+    /**
+     * 圧力値が文字列の数値として保存され、確認画面にも単位付きで表示されることを確認する。
+     */
     public function test_pressure_readings_are_saved_and_shown_as_numeric_values(): void
     {
         $response = $this->post(route('inspections.store'), [
@@ -66,6 +78,9 @@ class InspectionWorkflowTest extends TestCase
             ->assertSee('MPa');
     }
 
+    /**
+     * 履歴は閲覧専用で、編集すると編集者と変更内容が記録されることを確認する。
+     */
     public function test_history_is_read_only_and_editing_creates_an_editor_audit_log(): void
     {
         $record = InspectionRecord::create([
@@ -116,6 +131,9 @@ class InspectionWorkflowTest extends TestCase
             ->assertSee('0.18 MPa');
     }
 
+    /**
+     * 結果が空の更新を受け付けず、入力エラーを返すことを確認する。
+     */
     public function test_editor_name_and_at_least_one_result_are_required(): void
     {
         $record = InspectionRecord::create([
@@ -134,6 +152,9 @@ class InspectionWorkflowTest extends TestCase
             ->assertSessionHasErrors(['results']);
     }
 
+    /**
+     * CSVに圧力値・編集者が含まれ、数式として扱われる文字列が無害化されることを確認する。
+     */
     public function test_csv_contains_numeric_pressure_and_editor_columns(): void
     {
         InspectionRecord::create([
@@ -152,6 +173,9 @@ class InspectionWorkflowTest extends TestCase
         $this->assertStringContainsString("'=HYPERLINK", $response->streamedContent());
     }
 
+    /**
+     * 点検結果を1件も入力せずに新規保存できないことを確認する。
+     */
     public function test_new_record_requires_at_least_one_result(): void
     {
         $this->from(route('inspections.create'))
@@ -166,6 +190,9 @@ class InspectionWorkflowTest extends TestCase
         $this->assertDatabaseCount('inspection_records', 0);
     }
 
+    /**
+     * 圧力値の文字列不正やチェックリスト外の項目を拒否することを確認する。
+     */
     public function test_pressure_result_rejects_non_numeric_values_and_unknown_item_ids(): void
     {
         $this->from(route('inspections.create'))

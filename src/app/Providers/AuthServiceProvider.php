@@ -24,9 +24,9 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // 'admin-only' という名前のルールを作る
+        // ルートで can:admin-only と指定したときに、管理者かどうかを判定するルールです。
         Gate::define('admin-only', function (User $user) {
-            // DB の値が 0/1 (または '0'/'1') の場合が多いので、真偽値にキャストして判定する
+            // データベースの値が 0/1 や文字列でも正しく判定できるよう、真偽値に変換します。
             return (bool) $user->is_admin;
         });
     }

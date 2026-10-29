@@ -3,19 +3,20 @@
 namespace App\Support;
 
 /**
- * 定期点検（原料場の油の補充・交換、6月・12月）のチェックリスト定義。
- * 各機器に補充・交換の種類と量（L）を入力し、油種と規定油量は方法欄に固定表示する。
+ * 定期点検（原料場の油の補充・交換、6月・12月）のチェックリストを定義する。
+ * グループのnameは機器名、itemsは入力項目一覧。各項目のidは保存キー、location/item/methodは表示、
+ * typeは入力形式、actionsは選べる作業、unitは入力する量の単位を表す。油種と規定量はmethodに表示する。
  */
 class PeriodicChecklist extends Checklist
 {
     /**
-     * 点検画面に表示する順序で、グループおよび項目一覧を返す。
+     * 機器ごとにグループを作り、点検画面に表示する順序で返す。各項目の構造はクラス説明を参照。
      */
     public static function groups(): array
     {
         $groups = [];
 
-        // 補充・交換の選択肢は用紙の斜線に合わせて機器ごとに限定する。
+        // 各行は識別子、設備箇所、油種、規定量、選べる作業の順。作業は用紙の斜線に合わせて機器ごとに限定する。
         foreach ([1, 2, 3] as $no) {
             $groups[] = self::group("ミキサーNo.{$no}", "mixer{$no}", [
                 ['cone', 'リングコーン変速機', '(ツボサカエナジー)TD-10', '8.5L', ['replace', 'refill']],
@@ -34,7 +35,7 @@ class PeriodicChecklist extends Checklist
     }
 
     /**
-     * 機器ごとに、補充・交換の種類と量を入力する項目を作る。
+     * 機器ごとの定義を画面表示・保存用の項目配列に組み立てる。
      *
      * @param list<array{0: string, 1: string, 2: string, 3: string|null, 4: list<string>}> $equipments
      * @return array{name: string, items: list<array<string, mixed>>}
@@ -59,7 +60,7 @@ class PeriodicChecklist extends Checklist
     }
 
     /**
-     * 作業の種類ごとの表示名を返す。
+     * 保存値refill/replaceに対応する画面表示名を返す。
      *
      * @return array<string, string>
      */

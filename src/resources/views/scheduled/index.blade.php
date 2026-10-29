@@ -3,7 +3,7 @@
 @section('title', $type['name'] . '履歴')
 
 @section('content')
-    {{-- 点検履歴の見出しとタブナビゲーション。 --}}
+    {{-- ページの見出しと、点検入力・履歴の切り替えリンク。 --}}
     <div class="page-heading">
         <div>
             <p class="eyebrow">INSPECTION HISTORY</p>
@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    {{-- 保存済みの点検記録一覧。 --}}
+    {{-- 保存済み記録の件数、CSV出力、履歴の一覧をまとめて表示する。 --}}
     <div class="panel">
         <div class="panel-header">
             <div><h2 class="panel-title">保存済みの記録</h2><p class="panel-subtitle">全 {{ $records->total() }} 件</p></div>

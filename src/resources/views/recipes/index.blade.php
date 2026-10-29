@@ -5,14 +5,17 @@
 @endsection
 
 @section('content')
+{{-- ===== 画面タイトル ===== --}}
 <h1>レシピ管理</h1>
 
+{{-- 管理者のみ: 新規作成ボタン --}}
 @if(Auth::user()->is_admin)
 <div class="action-buttons">
     <a href="{{ route('recipes.create') }}" class="btn">🆕 新規レシピ作成</a>
 </div>
 @endif
 
+{{-- ===== レシピのカード一覧（レシピ1件=カード1枚、材料と基準量を表示） ===== --}}
 <div class="recipes-grid">
     @forelse($recipes as $recipe)
     <div class="recipe-card">
@@ -34,6 +37,7 @@
             </div>
         </div>
 
+        {{-- 管理者のみ: 編集・削除（削除は確認ダイアログを出す） --}}
         @if(Auth::user()->is_admin)
         <div class="recipe-card__actions">
             <a href="{{ route('recipes.edit', $recipe->id) }}" class="action-link">編集</a>
@@ -45,6 +49,7 @@
         </div>
         @endif
     </div>
+    {{-- レシピが1件も無いときの表示 --}}
     @empty
     <div class="empty-state">
         <p>レシピが登録されていません。</p>

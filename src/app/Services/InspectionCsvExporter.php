@@ -6,10 +6,13 @@ use App\Models\InspectionRecord;
 use App\Support\EquipmentChecklist;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * 日常点検の記録をCSV（表計算ソフトで扱える表形式）に書き出す。
+ */
 class InspectionCsvExporter
 {
     /**
-     * 保存済みの点検結果を、Excelで開けるCSVとしてダウンロードする。
+     * 保存済みの点検結果を、Excelで開けるCSV（表計算ソフト用の表形式）としてダウンロードする。
      */
     public function download(): StreamedResponse
     {
@@ -39,9 +42,7 @@ class InspectionCsvExporter
             foreach ($records as $record) {
                 foreach ($items as $id => $item) {
                     $result = $record->results[$id] ?? [];
-                    $status = ($result['status'] ?? null) === 'ok'
-                        ? '良好'
-                        : (($result['status'] ?? null) === 'ng' ? '要対応' : (isset($result['pressure']) ? '数値記録' : '未点検'));
+                    $status = $this->statusLabel($result);
                     $row = [
                         $record->inspection_date->format('Y-m-d'),
                         $record->inspector,
@@ -70,7 +71,25 @@ class InspectionCsvExporter
     }
 
     /**
-     * 表計算ソフトでテキストが数式として実行されないようにする。
+     * 保存された値から、CSVに表示する点検状態の文言を選ぶ。
+     *
+     * @param array<string, mixed> $result
+     */
+    private function statusLabel(array $result): string
+    {
+        if (($result['status'] ?? null) === 'ok') {
+            return '良好';
+        }
+
+        if (($result['status'] ?? null) === 'ng') {
+            return '要対応';
+        }
+
+        return isset($result['pressure']) ? '数値記録' : '未点検';
+    }
+
+    /**
+     * 入力内容が表計算ソフトで数式として実行されないよう、危険な先頭文字を無害化する。
      */
     private function safeTextCell(?string $value): string
     {

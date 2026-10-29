@@ -6,8 +6,10 @@
 @endsection
 
 @section('content')
+{{-- ===== 画面タイトル ===== --}}
 <h1>計量ログの修正</h1>
 
+{{-- ===== 修正フォーム（PUT = 更新のリクエスト。送信先は logs.update） ===== --}}
 <div class="form-container">
     <div class="material-form-container">
         <h2>{{ $log->recipe->name }}</h2>
@@ -16,6 +18,7 @@
             @csrf
             @method('PUT')
 
+            {{-- 計量日時（old() = 入力エラーで戻ったときに直前の入力値を再表示する） --}}
             <div class="form-group">
                 <label for="weighing_date">計量日時</label>
                 <input type="datetime-local" id="weighing_date" name="weighed_at" value="{{ old('weighed_at', \Carbon\Carbon::parse($log->weighed_at)->format('Y-m-d\TH:i')) }}" required>
@@ -24,6 +27,7 @@
                 @enderror
             </div>
 
+            {{-- レシピに含まれる材料の実測量入力欄（基準量・許容範囲を横に表示） --}}
             <div class="materials-section">
                 <h3>材料と数量</h3>
                 <div class="materials-grid">
@@ -59,6 +63,7 @@
                 </div>
             </div>
 
+            {{-- レシピ外の材料欄。既存の行（入力エラー時は直前の入力、なければ記録済みのレシピ外材料）を渡す --}}
             @php
                 $extraRows = old('extra_materials', $extraSelections->map(function ($m) {
                     return ['material_id' => $m->id, 'quantity' => $m->pivot->actual_quantity];
@@ -66,6 +71,7 @@
             @endphp
             @include('logs._extra-materials', ['selectableMaterials' => $selectableMaterials, 'extraRows' => $extraRows])
 
+            {{-- 備考（レシピ外材料を使った場合は理由を必須とする） --}}
             <div class="form-group">
                 <label for="remarks">備考</label>
                 <textarea id="remarks" name="notes" class="form-textarea">{{ old('notes', $log->notes) }}</textarea>
@@ -74,6 +80,7 @@
                 @enderror
             </div>
 
+            {{-- 保存・キャンセルボタン --}}
             <div class="form-actions">
                 <button type="submit" class="btn">💾 修正を保存</button>
                 <a href="{{ route('logs.index') }}" class="btn btn-secondary">キャンセル</a>
@@ -82,6 +89,7 @@
     </div>
 </div>
 
+{{-- ===== 修正履歴（いつ・誰が・何を変更したか） ===== --}}
 <section class="log-edit-history">
     <h2>修正履歴</h2>
     @if($editLogs->isEmpty())
@@ -98,32 +106,8 @@
             </thead>
             <tbody>
                 @foreach($editLogs as $editLog)
-                @php
-                    $before = $editLog->before_data;
-                    $after = $editLog->after_data;
-                    $beforeMaterials = collect($before['materials'])->keyBy('material_id');
-                    $changes = [];
-                    if ($before['weighed_at'] !== $after['weighed_at']) {
-                        $changes[] = '計量日時：' . $before['weighed_at'] . ' → ' . $after['weighed_at'];
-                    }
-                    if (($before['notes'] ?? '') !== ($after['notes'] ?? '')) {
-                        $changes[] = '備考：' . (($before['notes'] ?? '') !== '' ? $before['notes'] : '（なし）') . ' → ' . (($after['notes'] ?? '') !== '' ? $after['notes'] : '（なし）');
-                    }
-                    $afterMaterials = collect($after['materials'])->keyBy('material_id');
-                    foreach ($after['materials'] as $afterMaterial) {
-                        $old = $beforeMaterials->get($afterMaterial['material_id']);
-                        if (!$old) {
-                            $changes[] = $afterMaterial['name'] . '：追加 ' . number_format($afterMaterial['actual_quantity'], 3) . ' ' . $afterMaterial['unit'];
-                        } elseif ((float) $old['actual_quantity'] !== (float) $afterMaterial['actual_quantity']) {
-                            $changes[] = $afterMaterial['name'] . '：' . number_format($old['actual_quantity'], 3) . ' → ' . number_format($afterMaterial['actual_quantity'], 3) . ' ' . $afterMaterial['unit'];
-                        }
-                    }
-                    foreach ($before['materials'] as $beforeMaterial) {
-                        if (!$afterMaterials->has($beforeMaterial['material_id'])) {
-                            $changes[] = $beforeMaterial['name'] . '：削除（' . number_format($beforeMaterial['actual_quantity'], 3) . ' ' . $beforeMaterial['unit'] . '）';
-                        }
-                    }
-                @endphp
+                {{-- 修正前後を比べた変更内容の文章リスト（組み立ては ProductionLogEditLog::changeDescriptions） --}}
+                @php $changes = $editLog->changeDescriptions(); @endphp
                 <tr>
                     <td>{{ $editLog->created_at->format('Y-m-d H:i:s') }}</td>
                     <td>{{ $editLog->editor_name }}</td>
@@ -140,13 +124,17 @@
     @endif
 </section>
 
+{{-- ===== 一覧への戻りリンク ===== --}}
 <div class="action-buttons">
     <a href="{{ route('logs.index') }}" class="btn btn-secondary">← 計量ログ一覧に戻る</a>
 </div>
 
+{{-- ===== JavaScript: 入力した実測量が許容範囲外なら入力欄に out-of-tolerance クラスを付けて強調する ===== --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.material-input').forEach(input => {
+            // 基準量±許容量の範囲外かを判定し、クラスの付け外しをする
+            // （基準量・許容量が無い、または許容量が0以下の材料は判定しない）
             const check = () => {
                 const standard = parseFloat(input.dataset.standard);
                 const tolerance = parseFloat(input.dataset.tolerance);
@@ -155,6 +143,7 @@
                     && (actual < standard - tolerance || actual > standard + tolerance);
                 input.classList.toggle('out-of-tolerance', out);
             };
+            // 入力のたびに判定し、画面表示時にも1回判定する
             input.addEventListener('input', check);
             check();
         });

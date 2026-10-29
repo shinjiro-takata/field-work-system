@@ -2,10 +2,14 @@
 
 namespace App\Support;
 
+/**
+ * フォーム入力の形を、DBに保存する点検結果の形へ変換するマッパー。
+ * マッパーは、異なるデータ形式どうしを対応付けて変換する処理。
+ */
 class InspectionResultMapper
 {
     /**
-     * 既知の点検項目だけを、データベース保存用の結果配列へ変換する。
+     * チェックリストにある項目だけを、DBに保存する結果配列へ変換する。
      *
      * @param array<string, array{status?: 'ok'|'ng'|null, pressure?: int|float|string|null, value?: int|float|string|null, action?: string|null}> $submitted
      * @param array<string, array<string, mixed>>|null $items

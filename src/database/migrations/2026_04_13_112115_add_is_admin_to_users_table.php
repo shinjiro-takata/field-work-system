@@ -4,6 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * users テーブルに「管理者かどうか」を表す is_admin 列を追加する。
+ */
 class AddIsAdminToUsersTable extends Migration
 {
     /**

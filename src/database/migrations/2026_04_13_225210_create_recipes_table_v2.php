@@ -4,6 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * 新構造のレシピテーブル recipes を作成する（レシピ名のみを持ち、材料は recipe_materials で紐付ける）。
+ */
 class CreateRecipesTableV2 extends Migration
 {
     /**

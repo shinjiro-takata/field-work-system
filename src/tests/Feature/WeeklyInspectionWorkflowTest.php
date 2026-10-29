@@ -8,17 +8,23 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * WeeklyInspectionWorkflowTestの画面表示・保存・編集・出力の動作を確認する。
+ */
 class WeeklyInspectionWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    // 設備点検はログイン必須のため、全テストでログイン済みにする。
+    // 点検画面を利用できるよう、各テストの開始時にテスト用ユーザーでログインする。
     protected function setUp(): void
     {
         parent::setUp();
         $this->actingAs(User::factory()->create(['name' => '佐藤']));
     }
 
+    /**
+     * 週次点検画面に対象グループ・項目と補足説明が表示されることを確認する。
+     */
     public function test_weekly_inspection_page_renders_all_expected_groups_and_items(): void
     {
         $this->get(route('inspections.weekly.create'))
@@ -39,6 +45,9 @@ class WeeklyInspectionWorkflowTest extends TestCase
             ->assertSee('※異常が発生した場合は修理依頼書を作成し設備担当者まで連絡');
     }
 
+    /**
+     * 週次点検の数値・状態を保存し、記録確認画面に表示できることを確認する。
+     */
     public function test_can_create_and_view_weekly_inspection_record(): void
     {
         $response = $this->post(route('inspections.weekly.store'), [
@@ -70,6 +79,9 @@ class WeeklyInspectionWorkflowTest extends TestCase
             ->assertSee('佐藤');
     }
 
+    /**
+     * 週次点検を編集でき、担当者名と編集内容が履歴に残ることを確認する。
+     */
     public function test_can_edit_weekly_inspection_and_tracks_editor_log(): void
     {
         $record = InspectionRecord::create([
@@ -116,6 +128,9 @@ class WeeklyInspectionWorkflowTest extends TestCase
             ->assertSee('要対応');
     }
 
+    /**
+     * 週次と日常の履歴が互いに混ざらず、それぞれの一覧に表示されることを確認する。
+     */
     public function test_weekly_history_isolates_weekly_from_daily(): void
     {
         $daily = InspectionRecord::create([
@@ -143,6 +158,9 @@ class WeeklyInspectionWorkflowTest extends TestCase
             ->assertDontSee('週次担当');
     }
 
+    /**
+     * 週次点検のCSVに測定値と機器名が出力されることを確認する。
+     */
     public function test_can_export_weekly_inspection_csv(): void
     {
         InspectionRecord::create([
@@ -166,6 +184,9 @@ class WeeklyInspectionWorkflowTest extends TestCase
         $this->assertStringContainsString('5.2', $content);
     }
 
+    /**
+     * 結果を空のまま週次点検を保存できないことを確認する。
+     */
     public function test_weekly_inspection_requires_at_least_one_result(): void
     {
         $this->from(route('inspections.weekly.create'))
@@ -178,6 +199,9 @@ class WeeklyInspectionWorkflowTest extends TestCase
             ->assertSessionHasErrors('results');
     }
 
+    /**
+     * 同じ日付の週次点検を重複登録できないことを確認する。
+     */
     public function test_weekly_inspection_prevents_duplicate_date_within_weekly(): void
     {
         InspectionRecord::create([

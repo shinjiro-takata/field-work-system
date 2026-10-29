@@ -8,70 +8,49 @@ use App\Models\Material;
 use App\Http\Requests\StoreRecipeRequest;
 use App\Http\Requests\UpdateRecipeRequest;
 
+/**
+ * レシピ（材料と基準量・許容範囲の組み合わせ）の一覧・詳細・登録・編集・削除を担当するコントローラ。
+ */
 class RecipeController extends Controller
 {
+    /** レシピ一覧を表示する。 */
     public function index()
     {
         $recipes = Recipe::with('materials')->get();
         return view('recipes.index', compact('recipes'));
     }
 
+    /** レシピ詳細（使う材料の一覧つき）を表示する。 */
     public function show(Recipe $recipe)
     {
         $recipe->load('materials');
         return view('recipes.show', compact('recipe'));
     }
 
+    /** レシピ新規登録画面を表示する。選択肢として全材料を渡す。 */
     public function create()
     {
         $materials = Material::all();
         return view('recipes.create', compact('materials'));
     }
 
+    /**
+     * レシピを新規登録する。
+     * フォームで「新しい材料」が入力されていれば、材料も同時に登録してレシピに含める。
+     */
     public function store(StoreRecipeRequest $request)
     {
         $recipe = Recipe::create($request->validated());
 
-        // 新しい材料を追加
-        if ($request->new_material_name && $request->new_material_unit) {
-            $newMaterial = Material::firstOrCreate(
-                ['name' => $request->new_material_name, 'unit' => $request->new_material_unit],
-                ['name' => $request->new_material_name, 'unit' => $request->new_material_unit]
-            );
-            // $request->material_ids[]に新しい材料のIDを追加
-            $material_ids = $request->material_ids ?? [];
-            $material_ids[] = $newMaterial->id;
-            $request->merge(['material_ids' => $material_ids]);
-
-            // 新材料の数量と許容範囲を設定
-            $materials_data = $request->materials ?? [];
-            if ($request->new_material_quantity !== null) {
-                $materials_data[$newMaterial->id] = $request->new_material_quantity;
-            } else {
-                $materials_data[$newMaterial->id] = 0;
-            }
-            $request->merge(['materials' => $materials_data]);
-
-            $tolerances_data = $request->tolerances ?? [];
-            if ($request->new_material_tolerance !== null) {
-                $tolerances_data[$newMaterial->id] = $request->new_material_tolerance;
-            }
-            $request->merge(['tolerances' => $tolerances_data]);
-        }
-
-        $materials = [];
-        foreach ($request->material_ids as $material_id) {
-            if (isset($request->materials[$material_id])) {
-                $materials[$material_id] = [
-                    'quantity' => $request->materials[$material_id],
-                    'tolerance' => $request->tolerances[$material_id] ?? null
-                ];
-            }
-        }
-        $recipe->materials()->attach($materials);
+        // attach = 中間テーブル（ピボットテーブル: レシピと材料を結ぶ表）に行を追加する
+        $recipe->materials()->attach($this->buildMaterialPivotData($request));
         return redirect()->route('recipes.index');
     }
 
+    /**
+     * レシピ編集画面を表示する。
+     * 画面の入力欄に初期値を入れるため、材料ごとの基準量・許容範囲を ID をキーにした配列で渡す。
+     */
     public function edit(Recipe $recipe)
     {
         $materials = Material::all();
@@ -85,54 +64,63 @@ class RecipeController extends Controller
         return view('recipes.edit', compact('recipe', 'materials', 'recipeMaterialIds', 'recipeMaterials', 'recipeTolerance'));
     }
 
+    /**
+     * レシピを更新する。「新しい材料」が入力されていれば材料も同時に登録してレシピに含める。
+     */
     public function update(UpdateRecipeRequest $request, Recipe $recipe)
     {
         $recipe->update($request->validated());
 
-        // 新しい材料を追加
-        if ($request->new_material_name && $request->new_material_unit) {
-            $newMaterial = Material::firstOrCreate(
-                ['name' => $request->new_material_name, 'unit' => $request->new_material_unit],
-                ['name' => $request->new_material_name, 'unit' => $request->new_material_unit]
-            );
-            // $request->new_material_ids[]に新しい材料のIDを追加
-            $material_ids = $request->material_ids ?? [];
-            $material_ids[] = $newMaterial->id;
-            $request->merge(['material_ids' => $material_ids]);
-
-            // 新材料の数量と許容範囲を設定
-            $materials = $request->materials ?? [];
-            if ($request->new_material_quantity !== null) {
-                $materials[$newMaterial->id] = $request->new_material_quantity;
-            } else {
-                $materials[$newMaterial->id] = 0;
-            }
-            $request->merge(['materials' => $materials]);
-
-            $tolerances = $request->tolerances ?? [];
-            if ($request->new_material_tolerance !== null) {
-                $tolerances[$newMaterial->id] = $request->new_material_tolerance;
-            }
-            $request->merge(['tolerances' => $tolerances]);
-        }
-
-        $syncArray = [];
-        foreach ($request->material_ids as $material_id) {
-            if (isset($request->materials[$material_id])) {
-                $syncArray[$material_id] = [
-                    'quantity' => $request->materials[$material_id],
-                    'tolerance' => $request->tolerances[$material_id] ?? null
-                ];
-            }
-        }
-        $recipe->materials()->sync($syncArray);
+        // sync = 中間テーブルを渡した内容と同じになるよう、追加・更新・削除をまとめて行う
+        // （チェックを外された材料はレシピから外れる）
+        $recipe->materials()->sync($this->buildMaterialPivotData($request));
 
         return redirect()->route('recipes.index');
     }
 
+    /** レシピを削除する。 */
     public function destroy(Recipe $recipe)
     {
         $recipe->delete();
         return redirect()->route('recipes.index');
+    }
+
+    /**
+     * フォーム入力から、中間テーブルに保存するデータ [材料ID => ['quantity' => 基準量, 'tolerance' => 許容範囲]] を作る。
+     * 「新しい材料」（名前と単位が両方入力されたもの）があれば、材料マスタに登録（既存なら再利用）して含める。
+     * 新材料の基準量が未入力なら 0、許容範囲が未入力なら null として扱う。
+     */
+    private function buildMaterialPivotData(Request $request): array
+    {
+        $materialIds = $request->material_ids ?? [];
+        $quantities = $request->materials ?? [];
+        $tolerances = $request->tolerances ?? [];
+
+        if ($request->new_material_name && $request->new_material_unit) {
+            // firstOrCreate = 同じ名前・単位の材料があればそれを使い、なければ新規作成する
+            $newMaterial = Material::firstOrCreate(
+                ['name' => $request->new_material_name, 'unit' => $request->new_material_unit],
+                ['name' => $request->new_material_name, 'unit' => $request->new_material_unit]
+            );
+
+            $materialIds[] = $newMaterial->id;
+            $quantities[$newMaterial->id] = $request->new_material_quantity ?? 0;
+            if ($request->new_material_tolerance !== null) {
+                $tolerances[$newMaterial->id] = $request->new_material_tolerance;
+            }
+        }
+
+        // 基準量が入力されている材料だけを保存対象にする
+        $pivotData = [];
+        foreach ($materialIds as $materialId) {
+            if (isset($quantities[$materialId])) {
+                $pivotData[$materialId] = [
+                    'quantity' => $quantities[$materialId],
+                    'tolerance' => $tolerances[$materialId] ?? null,
+                ];
+            }
+        }
+
+        return $pivotData;
     }
 }

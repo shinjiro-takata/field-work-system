@@ -5,9 +5,11 @@
 @endsection
 
 @section('content')
+{{-- ===== レシピ名（タイトル） ===== --}}
 <h1>{{ $recipe->name }}</h1>
 
 <div class="recipe-detail">
+    {{-- 材料と基準量の一覧 --}}
     <div class="recipe-detail__card">
         <h2>材料一覧</h2>
         <div class="materials-list">
@@ -34,6 +36,7 @@
         </div>
     </div>
 
+    {{-- 管理者のみ: 編集・削除 --}}
     @if(Auth::user()->is_admin)
     <div class="recipe-detail__actions">
         <a href="{{ route('recipes.edit', $recipe) }}" class="btn">✏️ 編集</a>

@@ -3,12 +3,14 @@
 @section('title', $type['name'] . '記録の確認')
 
 @section('content')
+    {{-- 保存結果から入力済み件数と要対応件数を数え、グループ切り替えに使う値を初期化する。 --}}
     @php
         $checked = count($record->results ?? []);
         $issues = collect($record->results ?? [])->where('status', 'ng')->count();
         $previousGroup = null;
     @endphp
 
+    {{-- 記録の日付・担当者と、確認・編集画面への移動リンク。 --}}
     <div class="page-heading">
         <div>
             <p class="eyebrow">INSPECTION RECORD</p>
@@ -21,6 +23,7 @@
         </div>
     </div>
 
+    {{-- 判定、全項目の結果、メモ、編集履歴を表示する。 --}}
     <div class="panel">
         <div class="panel-header">
             <div>
@@ -43,6 +46,7 @@
             </div>
         @endif
 
+        {{-- 未入力の項目も含め、該当する点検種別のチェックリスト全体を表示する。 --}}
         @foreach ($items as $id => $item)
             @if ($loop->first || $previousGroup !== $item['group'])
                 @php $previousGroup = $item['group']; @endphp
@@ -89,6 +93,7 @@
             <div class="summary-content">{!! nl2br(e($record->note ?: 'なし')) !!}</div>
         </div>
 
+        {{-- 編集者・日時と、変更前後の値を記録ごとに表示する。 --}}
         @if ($record->editLogs->isNotEmpty())
             <section class="edit-log">
                 <h3>編集履歴</h3>

@@ -3,7 +3,7 @@
 @section('title', 'ホーム')
 
 @section('content')
-    {{-- 画面タイトル。 --}}
+    {{-- 点検メニューの見出し。 --}}
     <div class="page-heading">
         <div>
             <p class="eyebrow">FACILITY MANAGEMENT</p>
@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    {{-- 点検種別ごとのカード。各カードから点検画面へ移動する。 --}}
+    {{-- 日常・週次・月次・定期点検のカード。選ぶと対応する入力画面へ移動する。 --}}
     <div class="type-grid">
         @foreach ($types as $type)
             <a class="type-card" href="{{ route($type['route']) }}">

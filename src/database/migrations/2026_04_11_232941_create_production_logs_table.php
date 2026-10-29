@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * 最初の計量ログテーブル（旧構造）を作成する。
+ * 後続の 2026_04_14 のマイグレーションで削除され、作り直されている。
+ */
 class CreateProductionLogsTable extends Migration
 {
     /**

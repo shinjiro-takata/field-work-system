@@ -5,9 +5,12 @@
 @endsection
 
 @section('content')
+{{-- ===== 画面タイトル ===== --}}
 <h1>配合手順確認書</h1>
 
+{{-- ===== メニュー一覧（クリックで各機能へ移動するカード） ===== --}}
 <div class="menu-grid">
+    {{-- 全ユーザー共通のメニュー --}}
     <a href="{{ route('logs.index') }}" class="menu-item">
         <div class="menu-item__icon">📋</div>
         <div class="menu-item__title">計量ログの確認</div>
@@ -20,6 +23,7 @@
         <div class="menu-item__description">新しい計量データを入力します</div>
     </a>
 
+    {{-- 一般ユーザーにはレシピの閲覧のみ、管理者にはレシピ・材料の管理メニューを出す --}}
     @if(!Auth::user()->is_admin)
     <a href="{{ route('recipes.index') }}" class="menu-item">
         <div class="menu-item__icon">📖</div>

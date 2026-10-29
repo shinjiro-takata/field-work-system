@@ -12,6 +12,7 @@
 @section('content')
 <h1>レジン使用量確認表</h1>
 
+{{-- 履歴の確認と新規入力へ移動するメニューを表示します。 --}}
 <div class="menu-grid">
     <a href="{{ route('resin-usage.history') }}" class="menu-item">
         <div class="menu-item__icon">📋</div>
@@ -25,6 +26,7 @@
         <div class="menu-item__description">新しいレジン使用量を入力します</div>
     </a>
 
+    {{-- 材料の設定は管理者だけに表示します。 --}}
     @if(Auth::user()->is_admin)
     <a href="{{ route('resin-usage.settings.edit') }}" class="menu-item admin-only">
         <div class="menu-item__icon">⚙️</div>

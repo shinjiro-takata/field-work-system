@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * 点検種別・点検日・担当者・結果を1件ずつ保存するモデル。
+ *
  * @property int $id
  * @property string $inspection_type
  * @property \Illuminate\Support\Carbon $inspection_date
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class InspectionRecord extends Model
 {
-    // コントローラーで受け付ける点検項目だけを一括代入の対象にする。
+    // 登録・更新時にまとめて保存してよい項目を明示し、意図しない値の保存を防ぐ。
     protected $fillable = [
         'inspection_type',
         'inspection_date',
@@ -27,19 +29,19 @@ class InspectionRecord extends Model
         'last_edited_by',
     ];
 
-    // デフォルトの点検種別は日常点検とする。
+    // 種別を指定しない記録は日常点検として扱う。
     protected $attributes = [
         'inspection_type' => 'daily',
     ];
 
-    // 点検日とJSON形式の点検結果を、PHPで扱いやすい値に変換する。
+    // 日付とJSON形式の結果を、PHPの日時・配列として読み書きできるようにする。
     protected $casts = [
         'inspection_date' => 'date:Y-m-d',
         'results' => 'array',
     ];
 
     /**
-     * 指定された点検種別の記録に絞り込む。
+     * クエリ（データベース検索）を指定された点検種別の記録に絞り込む。
      */
     public function scopeOfType($query, string $type)
     {

@@ -11,12 +11,19 @@ class CreateInspectionEditLogsTable extends Migration
      */
     public function up(): void
     {
+        // 点検記録を編集したときの履歴を保存する。
         Schema::create('inspection_edit_logs', function (Blueprint $table) {
+            // 編集履歴を識別するID。
             $table->id();
+            // 対象の点検記録。記録が削除されたら履歴も削除する。
             $table->foreignId('inspection_record_id')->constrained()->onDelete('cascade');
+            // 編集を行った人の名前。
             $table->string('editor_name', 80);
+            // 変更前後の値をJSON形式で保存する。
             $table->json('changes');
+            // 編集が行われた日時。
             $table->timestamp('created_at');
+            // 記録ごとの履歴を日時順に探しやすくする索引。
             $table->index(['inspection_record_id', 'created_at']);
         });
     }

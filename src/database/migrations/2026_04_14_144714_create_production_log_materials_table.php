@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * 計量ログと材料を結ぶ中間テーブル（ピボットテーブル）production_log_materials を作成する。
+ * 材料ごとの実測量 actual_quantity をここに保存する。
+ */
 class CreateProductionLogMaterialsTable extends Migration
 {
     /**

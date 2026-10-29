@@ -4,6 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * 材料マスタ（材料名と単位）のテーブル materials を作成する。
+ */
 class CreateMaterialsTable extends Migration
 {
     /**

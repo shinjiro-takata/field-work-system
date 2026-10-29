@@ -4,6 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * recipe_materials を作り直す。基準量 quantity を小数第3位まで持てるようにした（decimal(8, 3)）。
+ */
 class CreateRecipeMaterialsTableV2 extends Migration
 {
     /**

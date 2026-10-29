@@ -8,6 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * 週次・月次・定期点検の入力値を種別ごとに検証し、保存用データを整える。
+ */
 class ScheduledInspectionRecordRequest extends FormRequest
 {
     /**
@@ -19,7 +22,7 @@ class ScheduledInspectionRecordRequest extends FormRequest
     }
 
     /**
-     * ルートで指定された点検種別を返す。
+     * URLのルートで指定された点検種別のキーを返す。
      */
     private function inspectionType(): string
     {
@@ -27,7 +30,7 @@ class ScheduledInspectionRecordRequest extends FormRequest
     }
 
     /**
-     * 点検種別のチェックリストに定義された入力だけを受け付ける。
+     * バリデーション（入力値が正しいかの確認）ルールを、点検種別のチェックリストに沿って作る。
      *
      * @return array<string, mixed>
      */
@@ -85,7 +88,7 @@ class ScheduledInspectionRecordRequest extends FormRequest
     }
 
     /**
-     * 検証済みフォーム値を、アプリケーション層で扱う形式に整える。
+     * 検証済みフォーム値を保存用に整え、マッパー（入力形式を保存形式へ変換する処理）に渡す。
      *
      * @return array<string, mixed>
      */

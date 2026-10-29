@@ -3,12 +3,12 @@
 namespace App\Support;
 
 /**
- * 月次点検（月初め又は保全担当者停止時点検）のチェックリスト定義。
+ * 月次点検（月初め又は保全担当者停止時点検）のチェックリストを定義する。
  */
 class MonthlyChecklist extends Checklist
 {
     /**
-     * 点検画面に表示する順序で、グループおよび項目一覧を返す。
+     * 点検画面に表示するグループと項目を返す。各項目のidは保存用キー、location/item/methodは表示情報、type/unitは入力種別と単位。
      */
     public static function groups(): array
     {

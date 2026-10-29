@@ -4,6 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * 新構造の計量ログテーブル production_logs を作成する（誰が・どのレシピで・備考。材料ごとの量は production_log_materials に持つ）。
+ */
 class CreateProductionLogsTableV2 extends Migration
 {
     /**

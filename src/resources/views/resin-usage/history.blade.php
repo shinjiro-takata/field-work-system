@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{{ asset('css/users.css') }}">
 <link rel="stylesheet" href="{{ asset('css/logs.css') }}">
 <style>
+    {{-- 差異がある行と上司確認が未完了の行を、それぞれ色で見分けます。 --}}
     .resin-usage-difference {
         background-color: #f8d7da;
         color: #842029;
@@ -30,6 +31,7 @@
 @section('content')
 <h1>レジン使用量の履歴</h1>
 
+{{-- 新しい記録の作成、またはレジンメニューへの移動を行います。 --}}
 <div class="action-buttons">
     <a href="{{ route('resin-usage.create') }}" class="btn">新規入力</a>
     <a href="{{ route('resin-usage.index') }}" class="btn btn-secondary">メニューに戻る</a>
@@ -47,6 +49,7 @@
 @elseif($records->isEmpty())
     <div class="info-box"><p>登録された履歴はありません。</p></div>
 @else
+    {{-- 1日分の在庫記録と確認状況を、材料ごとに一覧表示します。 --}}
     <div class="table-responsive">
         <table>
             <thead>
@@ -76,12 +79,14 @@
                             <td>{{ number_format($item->replenished_quantity, 3) }} {{ $item->material->unit }}</td>
                             <td>{{ number_format($item->calculated_stock, 3) }} {{ $item->material->unit }}</td>
                             <td>{{ number_format($item->actual_stock, 3) }} {{ $item->material->unit }}</td>
+                            {{-- 差異が0でない場合だけ色を付け、正の値には「+」を付けます。 --}}
                             <td class="{{ (float) $item->adjustment_quantity !== 0.0 ? 'resin-usage-difference' : '' }}">
                                 {{ $item->adjustment_quantity > 0 ? '+' : '' }}{{ number_format($item->adjustment_quantity, 3) }} {{ $item->material->unit }}
                                 @if($item->adjustment_reason)
                                     <br><small>{{ $item->adjustment_reason }}</small>
                                 @endif
                             </td>
+                            {{-- 上司確認日時が無い記録は未確認として色分けします。 --}}
                             <td class="{{ !$record->supervisor_confirmed_at ? 'resin-usage-unconfirmed' : '' }}">
                                 @if($record->supervisor_confirmed_at)
                                     {{ $record->supervisor_name }}<br>
@@ -90,6 +95,7 @@
                                     未確認
                                 @endif
                             </td>
+                            {{-- 複数材料で操作欄を重複させないよう、最初の行だけ表示します。 --}}
                             @if($loop->first)
                                 <td rowspan="{{ $record->items->count() }}">
                                     <a href="{{ route('resin-usage.edit', $record) }}" class="action-link">修正</a>
@@ -133,6 +139,7 @@
                             <td>{{ $audit->changed_by_name }}</td>
                             <td>{{ $audit->created_at->format('Y-m-d H:i:s') }}</td>
                             <td>
+                                {{-- details はクリックで開閉し、修正・削除前後の内容を表示します。 --}}
                                 <details>
                                     <summary>変更前後を表示</summary>
                                     @foreach(['変更前' => $audit->before_data, '変更後' => $audit->after_data] as $label => $snapshot)

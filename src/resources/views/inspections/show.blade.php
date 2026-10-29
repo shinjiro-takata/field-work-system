@@ -3,12 +3,12 @@
 @section('title', '点検記録の確認')
 
 @section('content')
-    {{-- Compute summary badges from the saved checklist values. --}}
+    {{-- 保存された結果から、入力済み件数と要対応件数を数える。 --}}
     @php
         $checked = count($record->results ?? []);
         $issues = collect($record->results ?? [])->where('status', 'ng')->count();
     @endphp
-    {{-- The record remains read-only until the user chooses the edit action. --}}
+    {{-- この画面は閲覧専用とし、編集ボタンを押した場合だけ編集画面へ移動する。 --}}
     <div class="page-heading">
         <div>
             <p class="eyebrow">INSPECTION RECORD</p>
@@ -28,7 +28,7 @@
         @if ($record->last_edited_by)
             <div class="summary-row"><div class="summary-label-field">最終編集</div><div class="summary-content">{{ $record->last_edited_by }} ・ {{ $record->updated_at->format('Y年n月j日 H:i') }}</div></div>
         @endif
-        {{-- Show all checklist items, including those that were left blank. --}}
+        {{-- 未入力の項目も含めてチェックリスト全体を表示する。 --}}
         @foreach ($items as $id => $item)
             @if ($loop->first || $previousGroup !== $item['group'])
                 @php $previousGroup = $item['group']; @endphp
@@ -52,7 +52,7 @@
             </div>
         @endforeach
         <div class="summary-row"><div class="summary-label-field">全体メモ</div><div class="summary-content">{!! nl2br(e($record->note ?: 'なし')) !!}</div></div>
-        {{-- Display the editor, timestamp, and field-level differences for each revision. --}}
+        {{-- 編集者・日時と、変更前後の値を記録ごとに表示する。 --}}
         @if ($record->editLogs->isNotEmpty())
             <section class="edit-log">
                 <h3>編集履歴</h3>

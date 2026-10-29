@@ -5,6 +5,9 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Fortify\Fortify;
 
+/**
+ * users テーブルに二要素認証（ログイン時にもう1段階の確認を行う仕組み）用の列を追加する。
+ */
 return new class extends Migration
 {
     /**

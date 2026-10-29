@@ -7,17 +7,23 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * MonthlyInspectionWorkflowTestの画面表示・保存・編集・出力の動作を確認する。
+ */
 class MonthlyInspectionWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    // 設備点検はログイン必須のため、全テストでログイン済みにする。
+    // 点検画面を利用できるよう、各テストの開始時にテスト用ユーザーでログインする。
     protected function setUp(): void
     {
         parent::setUp();
         $this->actingAs(User::factory()->create(['name' => '佐藤']));
     }
 
+    /**
+     * 月次点検画面に対象設備と温度の単位が表示されることを確認する。
+     */
     public function test_monthly_page_renders_groups_and_numeric_temperature(): void
     {
         $this->get(route('inspections.monthly.create'))
@@ -31,6 +37,9 @@ class MonthlyInspectionWorkflowTest extends TestCase
             ->assertSee('℃');
     }
 
+    /**
+     * 月次点検の新規登録・確認・編集・CSV出力を一連で確認する。
+     */
     public function test_can_create_view_edit_and_export_monthly_record(): void
     {
         $this->post(route('inspections.monthly.store'), [
@@ -62,6 +71,9 @@ class MonthlyInspectionWorkflowTest extends TestCase
         $this->assertStringContainsString('℃', $csv);
     }
 
+    /**
+     * 月次点検の画面と保存が、他の点検種別から独立していることを確認する。
+     */
     public function test_monthly_is_isolated_from_other_types(): void
     {
         $daily = InspectionRecord::create([
@@ -81,6 +93,9 @@ class MonthlyInspectionWorkflowTest extends TestCase
         ])->assertSessionHasNoErrors();
     }
 
+    /**
+     * 月次点検の空入力と数値でない測定値を拒否することを確認する。
+     */
     public function test_monthly_rejects_empty_and_non_numeric_input(): void
     {
         $this->post(route('inspections.monthly.store'), [
